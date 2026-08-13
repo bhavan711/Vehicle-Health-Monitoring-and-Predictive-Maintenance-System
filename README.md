@@ -61,7 +61,7 @@ The system monitors brake, engine, and safety-critical parameters across a distr
 ## Getting Started
 
 1. Flash each node's firmware from `nodes/<node_name>/` onto its ESP32 via Arduino IDE / PlatformIO
-2. Wire MCP2515 to ESP32 over SPI (see wiring diagrams in `docs/`)
+2. Wire MCP2515 to ESP32 over SPI 
 3. Configure Gateway node with your MQTT broker / ThingsBoard credentials
 4. Power on nodes — address claiming and CAN handshake happen automatically
 5. View live telemetry on the ThingsBoard dashboard
@@ -72,4 +72,4 @@ Research prototype — built as part of an internship project on vehicle health 
 
 ## License
 
-MIT (or update as applicable)
+MIT 
