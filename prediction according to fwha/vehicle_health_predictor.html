@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vehicle Health Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #15191d;
+    --panel: #1c2126;
+    --panel-raised: #222830;
+    --line: #2c333b;
+    --text: #edeff1;
+    --muted: #7c8b99;
+    --amber: #f2a93b;
+    --green: #45b26b;
+    --red: #e5484d;
+    --accent: #5b8def;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header { margin-bottom: 28px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .sub { color: var(--muted); font-size: 14px; max-width: 640px; line-height: 1.5; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .panel h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel h2::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .panel + .panel { margin-top: 20px; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field label .val {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    font-weight: 500;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+  select {
+    width: 100%;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  .gauges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 700px) {
+    .gauges { grid-template-columns: 1fr; }
+  }
+
+  .gauge-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 14px 14px;
+    text-align: center;
+    position: relative;
+  }
+  .gauge-card.combined {
+    background: var(--panel-raised);
+    border-color: #3a4450;
+  }
+  .gauge-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .gauge-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 30px;
+    font-weight: 700;
+    margin-top: -8px;
+  }
+  .gauge-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  .metrics-panel { }
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-name { color: var(--muted); }
+  .metric-name .target { display: block; font-size: 11px; color: #566270; margin-top: 1px; }
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.green { background: var(--green); }
+  .dot.amber { background: var(--amber); }
+  .dot.red { background: var(--red); }
+
+  .footnote {
+    font-size: 11.5px;
+    color: #566270;
+    margin-top: 20px;
+    line-height: 1.6;
+    border-top: 1px solid var(--line);
+    padding-top: 16px;
+  }
+  .footnote strong { color: var(--muted); }
+
+  .section-divider {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #566270;
+    margin: 18px 0 10px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--line);
+  }
+  .section-divider:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">J1939 Vehicle Health System &mdash; Prediction Console</div>
+    <h1>Vehicle Health Predictor</h1>
+    <div class="sub">Enter vehicle age, wear, and live sensor values to get an approximate health prediction. Runs the exact same formulas as <code>vehicle_health_model.h</code> (FHWA physics, chassis) and <code>engine_health_model.h</code> (real engine data), so numbers match what your ESP32 nodes will compute.</div>
+  </header>
+
+  <div class="layout">
+    <!-- INPUT PANEL -->
+    <div>
+      <div class="panel">
+        <h2>Chassis &amp; Vehicle</h2>
+
+        <div class="section-divider">Age &amp; Wear</div>
+        <div class="field">
+          <label>Vehicle age <span class="val" id="v_age">3.5 yr</span></label>
+          <input type="range" id="age" min="0" max="20" step="0.5" value="3.5">
+        </div>
+        <div class="field">
+          <label>Brake pad wear <span class="val" id="v_wear">15 %</span></label>
+          <input type="range" id="wear" min="0" max="100" step="1" value="15">
+        </div>
+        <div class="field">
+          <label>Suspension travel deviation <span class="val" id="v_susp">0 mm</span></label>
+          <input type="range" id="susp" min="0" max="30" step="1" value="0">
+        </div>
+
+        <div class="section-divider">Geometry</div>
+        <div class="field">
+          <label>Track width <span class="val" id="v_track">2.00 m</span></label>
+          <input type="range" id="track" min="1.85" max="2.15" step="0.01" value="2.00">
+        </div>
+        <div class="field">
+          <label>CG height (laden) <span class="val" id="v_cg">1.25 m</span></label>
+          <input type="range" id="cg" min="1.0" max="1.6" step="0.01" value="1.25">
+        </div>
+        <div class="field">
+          <label>Wheelbase <span class="val" id="v_wb">18.4 ft</span></label>
+          <input type="range" id="wb" min="17" max="20" step="0.1" value="18.4">
+        </div>
+        <div class="field">
+          <label>Articulation units</label>
+          <select id="units">
+            <option value="1" selected>1 &mdash; rigid bus (common)</option>
+            <option value="2">2 &mdash; articulated / BRT bus</option>
+          </select>
+        </div>
+
+        <div class="section-divider">Live Dynamics</div>
+        <div class="field">
+          <label>Deceleration <span class="val" id="v_decel">0.25 g</span></label>
+          <input type="range" id="decel" min="0.02" max="0.6" step="0.01" value="0.25">
+        </div>
+        <div class="field">
+          <label>Front axle load <span class="val" id="v_front">40 %</span></label>
+          <input type="range" id="front" min="20" max="70" step="1" value="40">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Engine (trained on real sensor data)</h2>
+        <div class="field">
+          <label>Engine RPM <span class="val" id="v_rpm">750</span></label>
+          <input type="range" id="rpm" min="60" max="2200" step="10" value="750">
+        </div>
+        <div class="field">
+          <label>Lube oil pressure <span class="val" id="v_oilp">3.2</span></label>
+          <input type="range" id="oilp" min="0" max="7.5" step="0.1" value="3.2">
+        </div>
+        <div class="field">
+          <label>Fuel pressure <span class="val" id="v_fuelp">8.0</span></label>
+          <input type="range" id="fuelp" min="0" max="21" step="0.1" value="8.0">
+        </div>
+        <div class="field">
+          <label>Coolant pressure <span class="val" id="v_coolp">2.3</span></label>
+          <input type="range" id="coolp" min="0" max="7.5" step="0.1" value="2.3">
+        </div>
+        <div class="field">
+          <label>Lube oil temp <span class="val" id="v_oilt">78 &deg;C</span></label>
+          <input type="range" id="oilt" min="60" max="100" step="1" value="78">
+        </div>
+        <div class="field">
+          <label>Coolant temp <span class="val" id="v_coolt">80 &deg;C</span></label>
+          <input type="range" id="coolt" min="60" max="200" step="1" value="80">
+        </div>
+      </div>
+    </div>
+
+    <!-- OUTPUT PANEL -->
+    <div>
+      <div class="gauges">
+        <div class="gauge-card">
+          <div class="gauge-label">Chassis Safety</div>
+          <svg viewBox="0 0 200 120" width="100%" style="max-width:220px">
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#2c333b" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc_chassis" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--green)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-value" id="score_chassis">--</div>
+          <div class="gauge-status" id="status_chassis">--</div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-label">Engine Health</div>
+          <svg viewBox="0 0 200 120" width="100%" style="max-width:220px">
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#2c333b" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc_engine" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--green)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-value" id="score_engine">--</div>
+          <div class="gauge-status" id="status_engine">--</div>
+        </div>
+        <div class="gauge-card combined">
+          <div class="gauge-label">Combined Vehicle Health</div>
+          <svg viewBox="0 0 200 120" width="100%" style="max-width:220px">
+            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#2c333b" stroke-width="14" stroke-linecap="round"/>
+            <path id="arc_combined" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="var(--green)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="0"/>
+          </svg>
+          <div class="gauge-value" id="score_combined">--</div>
+          <div class="gauge-status" id="status_combined">--</div>
+        </div>
+      </div>
+
+      <div class="panel metrics-panel">
+        <h2>FHWA Performance Measures (Chassis)</h2>
+        <div class="metric-row">
+          <div class="metric-name">Rollover threshold<span class="target">provisional target &ge; 0.85 g (bus-scale, not a confirmed AIS-031 benchmark)</span></div>
+          <div class="metric-value"><span class="dot" id="dot_rt"></span><span id="m_rt">--</span> g</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Braking efficiency<span class="target">target &ge; 0.70</span></div>
+          <div class="metric-value"><span class="dot" id="dot_be"></span><span id="m_be">--</span></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Rearward amplification<span class="target">target &le; 2.0</span></div>
+          <div class="metric-value"><span class="dot" id="dot_ra"></span><span id="m_ra">--</span></div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Low-speed offtracking<span class="target">target &le; 5 ft (rigid bus)</span></div>
+          <div class="metric-value"><span class="dot" id="dot_ot"></span><span id="m_ot">--</span> ft</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Chassis maintenance risk<span class="target">distilled logistic model</span></div>
+          <div class="metric-value"><span class="dot" id="dot_risk"></span><span id="m_risk">--</span> %</div>
+        </div>
+        <div class="metric-row">
+          <div class="metric-name">Engine health probability<span class="target">trained on real data, AUC 0.70</span></div>
+          <div class="metric-value"><span class="dot" id="dot_eng"></span><span id="m_eng">--</span> %</div>
+        </div>
+      </div>
+
+      <div class="footnote">
+        <strong>How this is computed:</strong> Chassis formulas (rollover threshold = track/2h, braking efficiency = decel &divide; friction demand, etc.) use geometry defaults for a <strong>common Indian rigid bus</strong> &mdash; the shared range across Tata Starbus, Ashok Leyland Viking, and AIS-052/CMVR body-code limits: wheelbase ~5.2-6.0m, track ~1.85-2.15m, laden CG ~1.0-1.6m, single rigid unit. Identical formulas to <code>vehicle_health_model.h</code>. Engine health uses a logistic regression trained on 19,535 real rows of engine sensor data &mdash; identical to <code>engine_health_model.h</code>. Combined score is a 50/50 average. Rollover/offtracking targets are provisional and self-consistent with this geometry, not confirmed AIS-031 benchmarks &mdash; validate against real bus data before relying on this for safety decisions.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+function statusFor(score) {
+  if (score >= 70) return { label: 'Normal', color: 'var(--green)', dot: 'green' };
+  if (score >= 45) return { label: 'Watch', color: 'var(--amber)', dot: 'amber' };
+  return { label: 'Attention', color: 'var(--red)', dot: 'red' };
+}
+
+function setArc(id, score) {
+  const el = document.getElementById(id);
+  const total = 251.2; // semicircle path length approx (pi * r, r=80)
+  const offset = total * (1 - clamp(score, 0, 100) / 100);
+  el.setAttribute('stroke-dashoffset', offset);
+  el.setAttribute('stroke', statusFor(score).color);
+}
+
+// ---------------- Chassis (FHWA) model ----------------
+function computeChassis(inp) {
+  const sag = Math.max(inp.susp, 0);
+  let rt = (inp.track / (2 * inp.cg)) * (1 - 0.05 * (sag / 10));
+  rt = clamp(rt, 0.40, 1.20);
+
+  const frontFrac = inp.front / 100;
+  let muReq = inp.decel * (1 + 0.4 * Math.abs(frontFrac - 0.4));
+  muReq = Math.max(muReq, 0.05);
+  let be = (inp.decel / muReq) * (1 - inp.wear / 250);
+  be = clamp(be, 0.30, 0.95);
+
+  let ra = inp.units <= 1 ? 1.0 : 1.0 + 0.25 * (inp.units - 1);
+  ra = clamp(ra, 1.0, 3.0);
+
+  // Rigid single-unit bus offtracking (reference wheelbase 18.4 ft / 5.6m)
+  const extra = Math.max(inp.wb - 18.4, 0);
+  let ot = 4.5 + 0.3 * extra;
+  ot = clamp(ot, 2, 10);
+
+  const n_rt = clamp((rt - 0.55) / (1.00 - 0.55), 0, 1);
+  const n_be = clamp((be - 0.5) / (0.9 - 0.5), 0, 1);
+  const n_ra = clamp(1 - (ra - 1.0) / (2.4 - 1.0), 0, 1);
+  const n_ot = clamp(1 - (ot - 4) / (8 - 4), 0, 1);
+  // Age weighting recalibrated against MoRTH "Road Accidents in India 2024"
+  // (Sec 3.18-3.19): fatality-share/accident-share ratio is flat (0.97-1.0)
+  // through 15 years, then jumps to 1.14 past 15 years - so penalty is mild
+  // through 15yr, then steep after.
+  let n_wt;
+  if (inp.age <= 15) {
+    n_wt = 1 - 0.15 * (inp.age / 15);
+  } else {
+    n_wt = 0.85 - 0.75 * clamp((inp.age - 15) / 5, 0, 1);
+  }
+  n_wt = clamp(n_wt, 0, 1);
+
+  const score = clamp(100 * (0.30 * n_rt + 0.25 * n_be + 0.15 * n_ra + 0.10 * n_ot + 0.20 * n_wt), 0, 100);
+
+  // distilled logistic maintenance-risk model (same coeffs as vehicle_health_model.h)
+  const mean = { rt: 0.7917, be: 0.8504, ra: 1.0897, ot: 4.5842, age: 3.9808, wear: 28.4133 };
+  const scale = { rt: 0.06886, be: 0.13534, ra: 0.11940, ot: 0.32329, age: 3.87515, wear: 26.11311 };
+  const coef = { rt: -0.4033, be: -0.5591, ra: 0.0756, ot: 0.0711, age: 0.0980, wear: 0.6743 };
+  const intercept = 0.3195;
+
+  const z_rt = (rt - mean.rt) / scale.rt;
+  const z_be = (be - mean.be) / scale.be;
+  const z_ra = (ra - mean.ra) / scale.ra;
+  const z_ot = (ot - mean.ot) / scale.ot;
+  const z_age = (inp.age - mean.age) / scale.age;
+  const z_wear = (inp.wear - mean.wear) / scale.wear;
+
+  const logit = intercept + coef.rt * z_rt + coef.be * z_be + coef.ra * z_ra +
+                coef.ot * z_ot + coef.age * z_age + coef.wear * z_wear;
+  const riskProb = 1 / (1 + Math.exp(-logit));
+
+  return { rt, be, ra, ot, score, riskProb };
+}
+
+// ---------------- Engine (real data) model ----------------
+function computeEngine(inp) {
+  const mean = { rpm: 792.6895, oilP: 3.3072, fuelP: 6.6544, coolP: 2.3389, oilT: 77.6585, coolT: 78.4541 };
+  const scale = { rpm: 266.7812, oilP: 1.0238, fuelP: 2.7571, coolP: 1.0346, oilT: 3.1265, coolT: 6.2320 };
+  const coef = { rpm: -0.59476, oilP: 0.13475, fuelP: 0.27060, coolP: -0.06399, oilT: -0.17111, coolT: -0.05442 };
+  const intercept = 0.04759;
+
+  const z_rpm = (inp.rpm - mean.rpm) / scale.rpm;
+  const z_oilP = (inp.oilp - mean.oilP) / scale.oilP;
+  const z_fuelP = (inp.fuelp - mean.fuelP) / scale.fuelP;
+  const z_coolP = (inp.coolp - mean.coolP) / scale.coolP;
+  const z_oilT = (inp.oilt - mean.oilT) / scale.oilT;
+  const z_coolT = (inp.coolt - mean.coolT) / scale.coolT;
+
+  const logit = intercept + coef.rpm * z_rpm + coef.oilP * z_oilP + coef.fuelP * z_fuelP +
+                coef.coolP * z_coolP + coef.oilT * z_oilT + coef.coolT * z_coolT;
+  const prob = 1 / (1 + Math.exp(-logit));
+  return { prob, score: prob * 100 };
+}
+
+function fmt(x, d) { return Number(x).toFixed(d); }
+
+function updateAll() {
+  const g = id => parseFloat(document.getElementById(id).value);
+
+  document.getElementById('v_age').textContent = fmt(g('age'), 1) + ' yr';
+  document.getElementById('v_wear').textContent = fmt(g('wear'), 0) + ' %';
+  document.getElementById('v_susp').textContent = fmt(g('susp'), 0) + ' mm';
+  document.getElementById('v_track').textContent = fmt(g('track'), 2) + ' m';
+  document.getElementById('v_cg').textContent = fmt(g('cg'), 2) + ' m';
+  document.getElementById('v_wb').textContent = fmt(g('wb'), 1) + ' ft';
+  document.getElementById('v_decel').textContent = fmt(g('decel'), 2) + ' g';
+  document.getElementById('v_front').textContent = fmt(g('front'), 0) + ' %';
+  document.getElementById('v_rpm').textContent = fmt(g('rpm'), 0);
+  document.getElementById('v_oilp').textContent = fmt(g('oilp'), 1);
+  document.getElementById('v_fuelp').textContent = fmt(g('fuelp'), 1);
+  document.getElementById('v_coolp').textContent = fmt(g('coolp'), 1);
+  document.getElementById('v_oilt').textContent = fmt(g('oilt'), 0) + ' °C';
+  document.getElementById('v_coolt').textContent = fmt(g('coolt'), 0) + ' °C';
+
+  const chassisInputs = {
+    age: g('age'), wear: g('wear'), susp: g('susp'), track: g('track'),
+    cg: g('cg'), wb: g('wb'), units: parseInt(document.getElementById('units').value),
+    decel: g('decel'), front: g('front')
+  };
+  const engineInputs = {
+    rpm: g('rpm'), oilp: g('oilp'), fuelp: g('fuelp'), coolp: g('coolp'), oilt: g('oilt'), coolt: g('coolt')
+  };
+
+  const chassis = computeChassis(chassisInputs);
+  const engine = computeEngine(engineInputs);
+  const combined = (chassis.score + engine.score) / 2;
+
+  // Gauges
+  document.getElementById('score_chassis').textContent = fmt(chassis.score, 0);
+  document.getElementById('score_engine').textContent = fmt(engine.score, 0);
+  document.getElementById('score_combined').textContent = fmt(combined, 0);
+  setArc('arc_chassis', chassis.score);
+  setArc('arc_engine', engine.score);
+  setArc('arc_combined', combined);
+
+  const sC = statusFor(chassis.score), sE = statusFor(engine.score), sCo = statusFor(combined);
+  document.getElementById('status_chassis').textContent = sC.label;
+  document.getElementById('status_chassis').style.color = sC.color;
+  document.getElementById('status_engine').textContent = sE.label;
+  document.getElementById('status_engine').style.color = sE.color;
+  document.getElementById('status_combined').textContent = sCo.label;
+  document.getElementById('status_combined').style.color = sCo.color;
+
+  // FHWA metrics table
+  document.getElementById('m_rt').textContent = fmt(chassis.rt, 3);
+  document.getElementById('m_be').textContent = fmt(chassis.be, 3);
+  document.getElementById('m_ra').textContent = fmt(chassis.ra, 2);
+  document.getElementById('m_ot').textContent = fmt(chassis.ot, 1);
+  document.getElementById('m_risk').textContent = fmt(chassis.riskProb * 100, 1);
+  document.getElementById('m_eng').textContent = fmt(engine.prob * 100, 1);
+
+  document.getElementById('dot_rt').className = 'dot ' + (chassis.rt >= 0.85 ? 'green' : chassis.rt >= 0.70 ? 'amber' : 'red');
+  document.getElementById('dot_be').className = 'dot ' + (chassis.be >= 0.70 ? 'green' : chassis.be >= 0.55 ? 'amber' : 'red');
+  document.getElementById('dot_ra').className = 'dot ' + (chassis.ra <= 2.0 ? 'green' : chassis.ra <= 2.4 ? 'amber' : 'red');
+  document.getElementById('dot_ot').className = 'dot ' + (chassis.ot <= 5 ? 'green' : chassis.ot <= 7 ? 'amber' : 'red');
+  document.getElementById('dot_risk').className = 'dot ' + (chassis.riskProb <= 0.4 ? 'green' : chassis.riskProb <= 0.65 ? 'amber' : 'red');
+  document.getElementById('dot_eng').className = 'dot ' + (engine.prob >= 0.65 ? 'green' : engine.prob >= 0.45 ? 'amber' : 'red');
+}
+
+document.querySelectorAll('input[type="range"], select').forEach(el => {
+  el.addEventListener('input', updateAll);
+});
+
+updateAll();
+</script>
+</body>
+</html>
