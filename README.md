@@ -72,4 +72,4 @@ Research prototype — built as part of an internship project on vehicle health 
 
 ## License
 
-MIT 
+All Rights Reserved — see LICENSE for details.
